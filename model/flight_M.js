@@ -27,11 +27,20 @@ class Account {
     }
   };
 
-  static searchFlight = async (destination, start_time) => {
+  static allFlight = async () => {
+    try {
+      const result = await db.execute(`select * from flights`); //srtat_time= y/m/d
+      console.log(result[0]);
+      return result[0];
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  static searchFlight = async (destination) => {
     try {
       const result = await db.execute(
-        `select * from flights where destination=? AND start_time=?`,
-        [destination, start_time]
+        `select * from flights where destination=${destination}`
       ); //srtat_time= y/m/d
       console.log(result[0]);
       return result[0];
@@ -40,17 +49,27 @@ class Account {
     }
   };
 
-  static addFlight = async (destination, start_time, seats, price) => {
+  static addFlight = async (destination, start_time, seats, price,id) => {
+
     try {
-      const result = await db.execute(
-        `INSERT INTO flights (destination, start_time, seats, price) VALUES (?,?,?,?)`,
-        [destination, start_time, seats, price]
-      ); //srtat_time= y/m/d
-      console.log(result[0]);
-      return result[0];
-    } catch (err) {
-      console.log(err);
-    }
+        const admin = await db.execute(
+          //   INSERT INTO account (email, username, password) VALUES ('$e', '$u', '$p')
+          `SELECT * FROM admin WHERE admin_id =${id} `
+        );
+        if (!(admin[0].length == 0)) {
+          console.log("admin id: ", admin[0]);
+          let result = await db.execute(
+            `INSERT INTO flights (destination, start_time, seats, price) VALUES (?,?,?,?)`,
+            [destination, start_time, seats, price]
+          );
+          console.log(result[0]);
+          return result[0];
+        } else {
+          return [];
+        }
+      } catch (err) {
+        console.log(err);
+      }
   };
 
   static deleteFlight = async (flight_no) => {
@@ -80,7 +99,7 @@ class Account {
   static bookFlight = async (pss_id, flight_no, seats) => {
     try {
       const result = await db.execute(
-        `INSERT INTO booking (pass_id, flight_no, seats_booked) VALUES (?,?,?)`,
+        `INSERT INTO booking_1 (pass_id, flight_no, seats_booked) VALUES (?,?,?)`,
         [pss_id, flight_no, seats]
       );
       console.log(result[0]);
@@ -88,9 +107,34 @@ class Account {
     } catch (err) {
       console.log(err);
     }
-  }
+  };
 
-  static fetchPassDetails = async (pass_id) => {
+  static fetchPassDetails = async (id) => {
+    console.log("id in M: ", id);
+    try {
+      const admin = await db.execute(
+        //   INSERT INTO account (email, username, password) VALUES ('$e', '$u', '$p')
+        `SELECT * FROM admin WHERE admin_id =${id} `
+      );
+      if (!(admin[0].length == 0)) {
+        console.log("admin id: ", admin[0]);
+        let result = await db.execute(
+          `SELECT * FROM booking_1 `
+        );
+        console.log(result[0]);
+        return result[0];
+      } else {
+        let result = await db.execute(
+          `SELECT * FROM booking_1 where pass_id=${id}`
+        );
+        console.log("pass detail: ", result[0]);
+        return result[0];
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  static fetchPassDetailsUser = async (pass_id) => {
     try {
       const result = await db.execute(
         `SELECT F.start_time date, P.pass_id pass_id, B.email email, B.flight_no flightNo, B.seats_booked bookedseats FROM (booking B inner Join passenger P on B.pass_id=P.pass_id) inner JOIN flights F on B.flight_no=F.flight_no where P.pass_id=${pass_id} ORDER BY start_time DESC`
@@ -114,8 +158,56 @@ class Account {
     }
   };
 
+  static login = async (email, password) => {
+    try {
+      let result = await db.execute(
+        //   INSERT INTO account (email, username, password) VALUES ('$e', '$u', '$p')
+        `SELECT * FROM account WHERE email =? AND password =? `,
+        [email, password]
+      );
+      if (!result[0][0]) {
+        result = await db.execute(
+          //   INSERT INTO account (email, username, password) VALUES ('$e', '$u', '$p')
+          `SELECT * FROM admin WHERE email =? AND admin_pass =? `,
+          [email, password]
+        );
+      }
 
+      return {
+        result: result[0][0],
+      };
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
+  static cancelBookedFlight = async (id, flight_no, pass_id) => {
+    console.log("id in M: ", id);
+    try {
+      const admin = await db.execute(
+        `SELECT * FROM admin WHERE admin_id =${id} `
+      );
+      if (!(admin[0].length == 0)) {
+        console.log("admin id: ", admin[0]);
+        let result = await db.execute(
+          `DELETE from booking_1 where pass_id=${pass_id}`
+        );
+        db.execute(
+            `UPDATE flights SET seats=seats+1 WHERE flight_no=${flight_no}`
+          );
+        console.log(result[0]);
+        return result[0];
+      } else {
+        let result = await db.execute(
+          `DELETE from booking_1 where pass_id=${pass_id}`
+        );
+        console.log("booking detail: ", result[0]);
+        return result[0];
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
 }
 
 exports.Account = Account;

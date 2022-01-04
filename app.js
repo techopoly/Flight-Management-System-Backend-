@@ -7,7 +7,7 @@ const { v4: uuidv4 } = require("uuid");
 
 const db = require("./util/database");
 const post = require("./routes/post"); 
-const user = require("./routes/user");
+// const user = require("./routes/user");
 const flight = require("./routes/flight");
 
 const app = express();
@@ -54,7 +54,7 @@ app.use((req, res, next) => {
 });
 
 app.use(post);
-app.use(user);
+// app.use(user);
 app.use(flight)
 app.use("/", (req, res, next) => {
   res.status(200).json({

@@ -8,7 +8,7 @@ module.exports= (req,res,next)=>{
     let decodedToken
 
     try{
-        decodedToken = jwt.verify(token, 'privatekey')
+        decodedToken = jwt.verify(token, 'privateKey')
     }catch(err){
         console.log(err)
     }
@@ -16,6 +16,6 @@ module.exports= (req,res,next)=>{
         console.log('not authenticated')
     }
 
-    req.userId = decodedToken.email;
+    req.id = decodedToken.id;
     next()
 }
