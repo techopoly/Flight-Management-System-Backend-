@@ -192,9 +192,7 @@ class Account {
         let result = await db.execute(
           `DELETE from booking_1 where pass_id=${pass_id}`
         );
-        db.execute(
-            `UPDATE flights SET seats=seats+1 WHERE flight_no=${flight_no}`
-          );
+        
         console.log(result[0]);
         return result[0];
       } else {
